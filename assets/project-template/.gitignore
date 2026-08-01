@@ -1,0 +1,12 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+media/
+build/draft/
+build/final/
+qa/frames/
+qa/contact-sheet.png
+deliverables/*.html
+deliverables/*.pptx
+deliverables/*.pdf

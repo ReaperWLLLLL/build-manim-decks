@@ -1,0 +1,79 @@
+schema_version: "0.1"
+project:
+  title: "{{PROJECT_TITLE}}"
+  kind: "research-talk"
+  language: "en"
+  audience: "Researchers familiar with the broad field"
+  duration_minutes: 2
+  aspect_ratio: "16:9"
+  theme: "scientific-dark"
+  source_files:
+    - "source/example-outline.md"
+narrative:
+  thesis: "A clearly visualized mechanism can make a research claim easier to evaluate."
+  takeaways:
+    - "The talk should connect one mechanism to one evidence-backed conclusion."
+    - "Animation should reveal relationships in narration order."
+slides:
+  - id: "s01"
+    section: "opening"
+    title: "{{PROJECT_TITLE}}"
+    purpose: "open"
+    claim: "The audience should know the question and why it matters."
+    duration_seconds: 30
+    source_refs: []
+    scene_class: "Opening"
+    visual_mode: "manim"
+    notes: |
+      Introduce the question, audience relevance, and one-sentence thesis.
+    beats:
+      - id: "b1"
+        narration: "Begin with the research question."
+        action: "Reveal the title and a concise thesis line."
+    qa:
+      must_show: ["title", "thesis"]
+      avoid: ["dense subtitle"]
+  - id: "s02"
+    section: "core"
+    title: "One mechanism connects the question to an observable result"
+    purpose: "explain"
+    claim: "The mechanism should be revealed before its evidence is evaluated."
+    duration_seconds: 60
+    source_refs: ["src-core-01"]
+    scene_class: "CoreMechanism"
+    visual_mode: "manim"
+    notes: |
+      Explain the mechanism in two visual beats, then connect it to evidence.
+    beats:
+      - id: "b1"
+        narration: "Establish the initial state and its constraint."
+        action: "Create two labeled states connected by a muted arrow."
+      - id: "b2"
+        narration: "Reveal the mechanism that changes the observable outcome."
+        action: "Transform the arrow, highlight the mechanism, then reveal the result."
+    qa:
+      must_show: ["initial state", "mechanism", "result"]
+      avoid: ["simultaneous unrelated motion"]
+  - id: "s03"
+    section: "closing"
+    title: "The conclusion is useful only within its evidence boundary"
+    purpose: "close"
+    claim: "End with the contribution, evidence, and limitation."
+    duration_seconds: 30
+    source_refs: ["src-core-01"]
+    scene_class: "Closing"
+    visual_mode: "manim"
+    notes: |
+      Restate the contribution and one limitation; leave the conclusion visible for questions.
+    beats:
+      - id: "b1"
+        narration: "Return to the thesis with its evidence boundary."
+        action: "Reveal contribution, evidence, and limitation as three aligned lines."
+    qa:
+      must_show: ["contribution", "evidence", "limitation"]
+      avoid: ["thank-you-only ending"]
+outputs:
+  html: "deliverables/presentation.html"
+  pptx: "deliverables/presentation.pptx"
+  pdf: "deliverables/presentation.pdf"
+  speech: "deliverables/speech.md"
