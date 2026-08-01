@@ -65,6 +65,7 @@ HTML_TEMPLATE = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="data:,">
 <title>__TITLE__</title>
 <style>
 :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }

@@ -8,11 +8,13 @@ import os
 import shlex
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 from typing import Any
 
 from common import SkillInputError, load_structured_file, project_root_for
 from export_html import export_html
+from postprocess_pptx import replace_posters
 from validate_deck import validate_deck
 from write_speech import build_speech
 
@@ -230,6 +232,15 @@ def main(argv: list[str] | None = None) -> int:
         if code:
             print(f"{output_type} export failed with exit code {code}.", file=sys.stderr)
             return code
+        if output_type == "pptx" and not args.dry_run:
+            try:
+                count = replace_posters(output_path)
+            except (OSError, RuntimeError, ValueError, zipfile.BadZipFile) as exc:
+                print(f"pptx poster replacement failed: {exc}", file=sys.stderr)
+                return 1
+            print(
+                f"Added {count} stable final-frame PPTX poster(s) with static fallbacks."
+            )
     return 0
 
 

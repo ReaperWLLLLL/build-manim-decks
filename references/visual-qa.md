@@ -77,10 +77,13 @@ Write `qa/report.md` with:
 ## s07 — The scheduler shifts flexible jobs toward cleaner intervals
 
 - Severity: major
-- Evidence: `qa/frames/s07-b2-middle.png`
+- Evidence: `qa/draft/frames/s07-b2-middle.png`
 - Finding: the SLA label overlaps the carbon-intensity curve at 1280x720.
 - Repair: move the label above the plot and reserve the upper-right safe area.
 - Status: fixed and re-rendered
 ```
 
 End the report with an output-by-output verification table covering HTML, PPTX, PDF, speech, source, and rebuild commands.
+
+Keep automated frames, contact sheets, and reports under `qa/draft/` or `qa/final/`. Final QA must not erase the draft evidence that explains what was repaired.
+Keep `Final visual approval: pending` in `qa/report.md` until a human or vision-capable agent has inspected the final contact sheet, every full-resolution final frame, and dense intermediate states. Change it to `approved` only when all blocker and major findings are fixed or explicitly accepted; `verify_outputs.py` enforces this gate.

@@ -97,7 +97,7 @@ Read `references/visual-qa.md`, then run:
 python "$SKILL_DIR/scripts/visual_qa.py" PROJECT_DIR/planning/deck.yaml --profile draft
 ```
 
-Open `qa/contact-sheet.png` and inspect it visually. Inspect full-resolution first, middle, maximum-density, and final frames for slides with equations, dense labels, charts, or reported QA findings. Automated checks do not approve composition, pacing, or scientific accuracy.
+Open `qa/<profile>/contact-sheet.png` and inspect it visually. Inspect full-resolution first, middle, maximum-density, and final frames for slides with equations, dense labels, charts, or reported QA findings. Automated checks do not approve composition, pacing, or scientific accuracy.
 
 Record findings with slide ID, severity, evidence frame, repair, and status. Block final export on unresolved blockers; require explicit user acceptance for unresolved major findings.
 
@@ -110,6 +110,14 @@ python "$SKILL_DIR/scripts/render_deck.py" PROJECT_DIR/planning/deck.yaml \
   --profile final --outputs html,pptx,pdf,speech
 ```
 
+Run final-profile QA after the high-resolution render:
+
+```bash
+python "$SKILL_DIR/scripts/visual_qa.py" PROJECT_DIR/planning/deck.yaml --profile final
+```
+
+Inspect `qa/final/contact-sheet.png`, every final frame at full size, and dense intermediate states. Update `qa/report.md` with findings and repairs. Set `Final visual approval: approved` only after that inspection; output verification rejects `pending`.
+
 The PPTX is intentionally video-based. Do not promise native editability of Manim objects.
 
 Verify outputs:
@@ -118,7 +126,7 @@ Verify outputs:
 python "$SKILL_DIR/scripts/verify_outputs.py" PROJECT_DIR/planning/deck.yaml
 ```
 
-File existence is insufficient. Verify HTML media and navigation, PPTX archive/slides/media/notes, PDF page count and previews, speech slide mapping and timing, and exact rebuild commands.
+File existence is insufficient. Verify final visual-approval evidence; HTML media and navigation; PPTX archive, slides, media, stable nonblank poster frames, static fallbacks behind videos, automatic playback, and notes; PDF page count, 16:9 dimensions, and previews; speech slide mapping and timing; source paths and evidence IDs; and exact rebuild commands.
 
 ## Deliver transparently
 

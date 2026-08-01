@@ -25,7 +25,12 @@ slides:
     scene_class: "Opening"
     visual_mode: "manim"
     notes: |
-      Introduce the question, audience relevance, and one-sentence thesis.
+      Start with a familiar tension: data centers need reliable electricity, while renewable
+      generation varies across time and place. Ask whether computing must remain a fixed
+      demand, or whether flexible workloads can follow cleaner power. State the thesis:
+      when scheduling respects service constraints, computing can become an adjustable
+      grid load. Preview that the talk will connect this mechanism to evidence and define
+      the boundary of the conclusion.
     beats:
       - id: "b1"
         narration: "Begin with the research question."
@@ -43,7 +48,18 @@ slides:
     scene_class: "CoreMechanism"
     visual_mode: "manim"
     notes: |
-      Explain the mechanism in two visual beats, then connect it to evidence.
+      First establish the initial state. Jobs arrive with deadlines, resource requirements,
+      and different degrees of flexibility. A conventional scheduler treats electricity as
+      continuously available and optimizes only computing objectives. Now introduce the
+      mechanism: attach a time- and location-specific carbon signal to the feasible execution
+      slots. Flexible jobs may move toward cleaner slots, while inflexible jobs remain fixed.
+      The service boundary does not move; it is a constraint, not a target that can be traded
+      away. Reveal the result only after that logic is visible. The observable change should
+      therefore be attributed to scheduling flexibility under constraints, rather than to an
+      unsupported claim that every workload can follow renewable generation. When presenting
+      empirical evidence, name the dataset, baseline, system boundary, and uncertainty before
+      emphasizing the improvement. This order lets the audience evaluate both the mechanism
+      and the strength of the evidence.
     beats:
       - id: "b1"
         narration: "Establish the initial state and its constraint."
@@ -64,7 +80,12 @@ slides:
     scene_class: "Closing"
     visual_mode: "manim"
     notes: |
-      Restate the contribution and one limitation; leave the conclusion visible for questions.
+      Return to the thesis with a precise boundary. The contribution is a scheduling view of
+      computing as a flexible grid load. The evidence must show a measured improvement against
+      a named baseline while preserving service requirements. The limitation is equally
+      important: benefit depends on workload flexibility, forecast quality, and available clean
+      power. Close by separating what the study demonstrates from what future deployment still
+      needs to validate.
     beats:
       - id: "b1"
         narration: "Return to the thesis with its evidence boundary."

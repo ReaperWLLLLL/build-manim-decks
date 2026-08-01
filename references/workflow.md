@@ -63,7 +63,7 @@ Apply all automated and human-review gates in `visual-qa.md`. Write findings to 
 
 ## 9. Build final deliverables
 
-After the draft passes QA, render the final resolution and package outputs according to `output-contract.md`. Verify every deliverable by opening or parsing it; file existence alone is insufficient.
+After the draft passes QA, render the final resolution and package outputs according to `output-contract.md`. Run final-profile visual QA, inspect its full-resolution evidence, record human or vision-agent approval in `qa/report.md`, and only then verify every deliverable. File existence alone is insufficient.
 
 ## 10. Handoff
 

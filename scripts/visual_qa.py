@@ -178,7 +178,7 @@ def render_report(findings: list[Finding], metadata: list[dict[str, Any]]) -> st
         [
             "## Manual review required",
             "",
-            "Inspect `qa/contact-sheet.png` and representative full-resolution frames for:",
+            "Inspect the profile contact sheet and representative full-resolution frames for:",
             "",
             "- text and equation clipping;",
             "- collisions and safe margins;",
@@ -232,7 +232,7 @@ def main(argv: list[str] | None = None) -> int:
 
     root = project_root_for(args.deck)
     slides_folder = root / "build" / args.profile / "slides"
-    qa_dir = root / "qa"
+    qa_dir = root / "qa" / args.profile
     frame_dir = qa_dir / "frames"
     findings: list[Finding] = []
     frames: list[tuple[str, Path]] = []

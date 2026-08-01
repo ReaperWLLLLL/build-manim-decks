@@ -21,9 +21,14 @@ project/
 │   ├── draft/             # draft media and manim-slides manifests
 │   └── final/             # final media and manim-slides manifests
 ├── qa/
-│   ├── frames/
-│   ├── contact-sheet.png
-│   ├── automated-report.md
+│   ├── draft/
+│   │   ├── frames/
+│   │   ├── contact-sheet.png
+│   │   └── automated-report.md
+│   ├── final/
+│   │   ├── frames/
+│   │   ├── contact-sheet.png
+│   │   └── automated-report.md
 │   ├── deliverable-verification.md
 │   └── report.md           # human review and repair ledger
 └── deliverables/
@@ -45,11 +50,12 @@ project/
 ## Video-based PPTX
 
 - Use one Manim-rendered video or declared static image per PowerPoint slide.
-- Include a poster frame for every video.
+- Include a unique, nonblank poster frame for every video. Use the final stable frame rather than the usually empty first animation frame.
+- Place an image-only copy of that poster behind the video object. This gives LibreOffice and other media-unaware renderers a visible static fallback without changing PowerPoint playback.
 - Enable automatic media playback where supported.
 - Insert plain-text speaker notes derived from `deck.yaml`.
 - Keep the slide size at 16:9 and match the rendered media resolution.
-- Verify slide count, embedded media count, notes, and archive integrity. If PowerPoint or LibreOffice is available, render a preview there as an additional check.
+- Verify slide count, embedded media count, unique poster frames, static fallback order, automatic playback timing, exact notes, 16:9 page size, and archive integrity. If PowerPoint or LibreOffice is available, render every slide there and inspect the result.
 
 The PPTX is intentionally media-based. Do not promise native editability of Manim objects.
 Playback policy varies between PowerPoint, Keynote, LibreOffice, and browser viewers; test in the user's target presenter when available.

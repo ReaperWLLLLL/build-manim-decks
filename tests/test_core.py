@@ -4,7 +4,11 @@ import copy
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
+import re
+
+import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -15,9 +19,36 @@ if str(SCRIPTS) not in sys.path:
 import render_deck
 import scaffold_project
 import validate_deck
+import verify_outputs
 import write_speech
 from export_html import export_html
+from postprocess_pptx import (
+    add_static_fallback,
+    resolve_target,
+    update_relationship_xml,
+)
 from common import load_structured_file, to_project_slug, to_python_class
+
+
+class SkillPackageTest(unittest.TestCase):
+    def test_portable_frontmatter_and_resource_map(self) -> None:
+        skill_path = REPO_ROOT / "SKILL.md"
+        text = skill_path.read_text(encoding="utf-8")
+        match = re.match(r"^---\n(.*?)\n---\n", text, flags=re.DOTALL)
+        self.assertIsNotNone(match)
+        frontmatter = yaml.safe_load(match.group(1))
+        self.assertEqual(set(frontmatter), {"name", "description"})
+        self.assertEqual(frontmatter["name"], "build-manim-decks")
+        self.assertLess(len(text.splitlines()), 500)
+        for reference in (REPO_ROOT / "references").glob("*.md"):
+            self.assertIn(f"`references/{reference.name}`", text)
+        self.assertFalse((REPO_ROOT / "README.md").exists())
+
+    def test_openai_interface_matches_skill(self) -> None:
+        data = yaml.safe_load((REPO_ROOT / "agents" / "openai.yaml").read_text())
+        interface = data["interface"]
+        self.assertIn("$build-manim-decks", interface["default_prompt"])
+        self.assertLessEqual(len(interface["short_description"]), 64)
 
 
 class HelpersTest(unittest.TestCase):
@@ -25,6 +56,58 @@ class HelpersTest(unittest.TestCase):
         self.assertEqual(to_python_class("2026 research talk"), "Scene2026ResearchTalk")
         self.assertEqual(to_project_slug("Research Talk 2026"), "research-talk-2026")
         self.assertEqual(to_project_slug("科研演讲"), "manim-deck")
+
+    def test_pptx_relationship_retargets_unique_poster(self) -> None:
+        relationships = b"""<?xml version='1.0' encoding='UTF-8'?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/video" Target="../media/media2.mp4"/>
+  <Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/>
+</Relationships>"""
+        updated, video, poster = update_relationship_xml(
+            relationships,
+            rel_path="ppt/slides/_rels/slide2.xml.rels",
+            poster_number=2,
+        )
+        self.assertEqual(video, "ppt/media/media2.mp4")
+        self.assertEqual(poster, "ppt/media/manim-poster-2.png")
+        self.assertIn(b"manim-poster-2.png", updated)
+        self.assertEqual(
+            resolve_target("ppt/slides/_rels/slide2.xml.rels", "../media/media2.mp4"),
+            "ppt/media/media2.mp4",
+        )
+
+    def test_pptx_static_fallback_is_behind_video_and_idempotent(self) -> None:
+        slide = b"""<?xml version='1.0' encoding='UTF-8'?>
+<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+       xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+       xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:cSld><p:spTree>
+    <p:nvGrpSpPr><p:cNvPr id="1" name=""/></p:nvGrpSpPr>
+    <p:pic>
+      <p:nvPicPr><p:cNvPr id="2" name="video"><a:videoFile r:link="rId3"/></p:cNvPr><p:cNvPicPr/><p:nvPr><a:videoFile r:link="rId3"/></p:nvPr></p:nvPicPr>
+      <p:blipFill><a:blip r:embed="rId4"/></p:blipFill>
+    </p:pic>
+  </p:spTree></p:cSld>
+</p:sld>"""
+        updated, count = add_static_fallback(slide, slide_number=2)
+        self.assertEqual(count, 1)
+        root = ET.fromstring(updated)
+        p_ns = "http://schemas.openxmlformats.org/presentationml/2006/main"
+        a_ns = "http://schemas.openxmlformats.org/drawingml/2006/main"
+        pictures = root.findall(f".//{{{p_ns}}}pic")
+        self.assertEqual(len(pictures), 2)
+        self.assertEqual(
+            pictures[0].find(f".//{{{p_ns}}}cNvPr").get("name"),
+            "manim-static-poster-2",
+        )
+        self.assertIsNone(pictures[0].find(f".//{{{a_ns}}}videoFile"))
+        repeated, repeated_count = add_static_fallback(updated, slide_number=2)
+        self.assertEqual(repeated_count, 0)
+        self.assertEqual(repeated, updated)
+
+    def test_mixed_chinese_timing_counts_latin_terms(self) -> None:
+        estimate = write_speech.estimate_minutes("算力调度 GPU SLA", "zh-CN")
+        self.assertGreater(estimate, 4 / 240)
 
 
 class ScaffoldAndValidationTest(unittest.TestCase):
@@ -55,6 +138,20 @@ class ScaffoldAndValidationTest(unittest.TestCase):
         messages = "\n".join(item.message for item in findings)
         self.assertIn("duplicate slide id", messages)
         self.assertIn("must be unique", messages)
+
+    def test_unknown_evidence_reference_fails(self) -> None:
+        invalid = copy.deepcopy(self.data)
+        invalid["slides"][1]["source_refs"] = ["claim-not-registered"]
+        findings = validate_deck.validate_deck(
+            invalid, deck_path=self.deck_path, check_paths=False
+        )
+        self.assertTrue(
+            any(
+                item.path == "slides[1].source_refs"
+                and "not declared" in item.message
+                for item in findings
+            )
+        )
 
     def test_output_escape_fails(self) -> None:
         invalid = copy.deepcopy(self.data)
@@ -99,9 +196,10 @@ class ScaffoldAndValidationTest(unittest.TestCase):
         self.assertNotIn("-qh", command)
 
     def test_speech_contains_all_slide_sections(self) -> None:
-        manuscript, _warnings = write_speech.build_speech(self.data)
+        manuscript, warnings = write_speech.build_speech(self.data)
         self.assertEqual(manuscript.count("\n## s"), len(self.data["slides"]))
         self.assertIn("## Timing summary", manuscript)
+        self.assertFalse(warnings)
 
     def test_html_export_is_self_contained(self) -> None:
         slides_folder = self.root / "build" / "draft" / "slides"
@@ -131,7 +229,21 @@ class ScaffoldAndValidationTest(unittest.TestCase):
         text = output.read_text(encoding="utf-8")
         self.assertEqual(count, 1)
         self.assertIn("data:video/mp4;base64,", text)
+        self.assertIn('<link rel="icon" href="data:,">', text)
         self.assertNotIn('src="https://', text)
+
+    def test_rebuild_template_is_complete_but_visual_approval_starts_pending(self) -> None:
+        rebuild_checks = verify_outputs.check_rebuild(self.root)
+        self.assertTrue(all(check.ok for check in rebuild_checks))
+        rebuild_path = self.root / "deliverables" / "rebuild.md"
+        rebuild_path.write_text(
+            rebuild_path.read_text(encoding="utf-8") + "\nC:\\Users\\alice\\deck\n",
+            encoding="utf-8",
+        )
+        self.assertFalse(all(check.ok for check in verify_outputs.check_rebuild(self.root)))
+        qa_checks = verify_outputs.check_qa(self.root, len(self.data["slides"]))
+        self.assertFalse(all(check.ok for check in qa_checks))
+        self.assertTrue(any("approval" in check.message for check in qa_checks if not check.ok))
 
 
 if __name__ == "__main__":

@@ -93,6 +93,7 @@ Rules:
 ## Evidence rules
 
 - Every quantitative claim must have at least one `source_ref`.
+- Every `source_ref` must match an ID declared in the first column of `planning/evidence-map.md`; the validator rejects unknown or duplicate IDs.
 - Reused paper figures must retain source and page/figure identifiers.
 - Distinguish reported evidence from proposed interpretation in the notes.
 - Never create a plausible-looking but unsupported experimental result.

@@ -15,8 +15,9 @@ from validate_deck import validate_deck
 
 def estimate_minutes(text: str, language: str) -> float:
     if language.lower().startswith("zh"):
-        count = len(re.findall(r"[\u3400-\u9fff]", text))
-        return count / 240.0
+        han_count = len(re.findall(r"[\u3400-\u9fff]", text))
+        latin_words = len(re.findall(r"\b[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*\b", text))
+        return han_count / 240.0 + latin_words / 130.0
     words = len(re.findall(r"\b\w+[\w'-]*\b", text))
     return words / 130.0
 

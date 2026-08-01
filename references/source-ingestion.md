@@ -27,6 +27,7 @@ Create stable IDs before planning slides:
 | `claim-05` | source-backed textual claim |
 
 Record original file, page or section, original caption, and allowed transformation. If a figure is redrawn with Manim, cite the original evidence and mark the new visual as an explanatory reconstruction.
+Keep each ID in backticks in the first column of the Markdown table. `validate_deck.py` reads this column and rejects duplicate or unregistered slide references.
 
 ## Scientific integrity
 

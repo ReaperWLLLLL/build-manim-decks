@@ -37,6 +37,7 @@
 ## PPTX and PDF
 
 - PPTX slides contain videos and poster frames, not editable Manim shapes.
+- The exporter replaces each converter-generated first-frame poster with the video's final stable frame and adds an image-only copy behind the video for media-unaware renderers. If thumbnails are black, re-run the PPTX export rather than accepting the default poster.
 - Automatic video playback varies by presenter. Verify with the actual PowerPoint, Keynote, or LibreOffice version used at the venue when possible.
 - If PowerPoint reports damaged media, confirm the embedded files with `scripts/verify_outputs.py`, then re-encode the source videos to H.264/AAC-compatible MP4.
 - PDF pages are representative static frames. Use HTML or PPTX when intermediate animation states are essential.

@@ -47,6 +47,23 @@ def positive_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0
 
 
+def evidence_ids_from_markdown(path: Path) -> tuple[set[str], set[str]]:
+    """Extract first-column evidence IDs and report duplicates from a Markdown table."""
+    ids: set[str] = set()
+    duplicates: set[str] = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = re.match(r"^\|\s*`?([A-Za-z0-9][A-Za-z0-9._-]*)`?\s*\|", line)
+        if not match:
+            continue
+        evidence_id = match.group(1)
+        if evidence_id.lower() == "id" or set(evidence_id) == {"-"}:
+            continue
+        if evidence_id in ids:
+            duplicates.add(evidence_id)
+        ids.add(evidence_id)
+    return ids, duplicates
+
+
 def validate_deck(data: dict[str, Any], *, deck_path: Path, check_paths: bool) -> list[Finding]:
     findings: list[Finding] = []
 
@@ -55,6 +72,25 @@ def validate_deck(data: dict[str, Any], *, deck_path: Path, check_paths: bool) -
 
     def warning(path: str, message: str) -> None:
         findings.append(Finding("warning", path, message))
+
+    root = project_root_for(deck_path)
+    evidence_map_path = root / "planning" / "evidence-map.md"
+    evidence_ids: set[str] = set()
+    if not evidence_map_path.is_file():
+        error("planning.evidence-map", f"required file does not exist: {evidence_map_path}")
+    else:
+        try:
+            evidence_ids, duplicate_evidence_ids = evidence_ids_from_markdown(evidence_map_path)
+        except OSError as exc:
+            error("planning.evidence-map", f"cannot read evidence map: {exc}")
+        else:
+            if not evidence_ids:
+                error("planning.evidence-map", "must declare at least one evidence ID")
+            if duplicate_evidence_ids:
+                error(
+                    "planning.evidence-map",
+                    f"duplicate evidence IDs: {sorted(duplicate_evidence_ids)}",
+                )
 
     if str(data.get("schema_version")) != "0.1":
         error("schema_version", 'must be "0.1"')
@@ -89,7 +125,6 @@ def validate_deck(data: dict[str, Any], *, deck_path: Path, check_paths: bool) -
             )
 
     if check_paths:
-        root = project_root_for(deck_path)
         for index, path_text in enumerate(source_files):
             if non_empty_string(path_text) and not (root / path_text).is_file():
                 error(f"project.source_files[{index}]", f"file does not exist: {path_text}")
@@ -163,6 +198,17 @@ def validate_deck(data: dict[str, Any], *, deck_path: Path, check_paths: bool) -
             error(f"{base}.source_refs", "must be a list of non-empty strings")
         elif purpose in EVIDENCE_PURPOSES and not source_refs:
             error(f"{base}.source_refs", "evidence-bearing slides require at least one source ref")
+        if isinstance(source_refs, list):
+            unknown_refs = sorted(
+                ref
+                for ref in source_refs
+                if non_empty_string(ref) and ref not in evidence_ids
+            )
+            if unknown_refs:
+                error(
+                    f"{base}.source_refs",
+                    f"IDs are not declared in planning/evidence-map.md: {unknown_refs}",
+                )
 
         beats = slide.get("beats")
         if visual_mode in {"manim", "hybrid"}:
