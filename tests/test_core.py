@@ -195,6 +195,24 @@ class ScaffoldAndValidationTest(unittest.TestCase):
         self.assertIn("--quality=h", command)
         self.assertNotIn("-qh", command)
 
+    def test_rerender_cleans_only_selected_scene_outputs(self) -> None:
+        slides_folder = self.root / "build" / "final" / "slides"
+        selected = render_deck.parse_selection(self.data, "s02")
+        selected_name = selected[0]["scene_class"]
+        untouched_name = self.data["slides"][0]["scene_class"]
+        for scene_name in (selected_name, untouched_name):
+            scene_dir = slides_folder / "files" / scene_name
+            scene_dir.mkdir(parents=True, exist_ok=True)
+            (scene_dir / "segment.mp4").write_bytes(b"generated")
+            (slides_folder / f"{scene_name}.json").write_text("{}", encoding="utf-8")
+
+        render_deck.clean_selected_scene_outputs(slides_folder, selected)
+
+        self.assertFalse((slides_folder / "files" / selected_name).exists())
+        self.assertFalse((slides_folder / f"{selected_name}.json").exists())
+        self.assertTrue((slides_folder / "files" / untouched_name).is_dir())
+        self.assertTrue((slides_folder / f"{untouched_name}.json").is_file())
+
     def test_speech_contains_all_slide_sections(self) -> None:
         manuscript, warnings = write_speech.build_speech(self.data)
         self.assertEqual(manuscript.count("\n## s"), len(self.data["slides"]))

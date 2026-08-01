@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import zipfile
@@ -116,6 +117,20 @@ def parse_outputs(value: str) -> list[str]:
     return outputs
 
 
+def clean_selected_scene_outputs(
+    slides_folder: Path, selected: list[dict[str, Any]]
+) -> None:
+    """Remove stale generated media only for scenes about to be rendered."""
+    for slide in selected:
+        scene_name = slide["scene_class"]
+        scene_dir = slides_folder / "files" / scene_name
+        manifest = slides_folder / f"{scene_name}.json"
+        if scene_dir.is_dir():
+            shutil.rmtree(scene_dir)
+        if manifest.is_file():
+            manifest.unlink()
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("deck", type=Path)
@@ -155,6 +170,8 @@ def main(argv: list[str] | None = None) -> int:
     slides_folder.mkdir(parents=True, exist_ok=True)
 
     if not args.skip_render:
+        if not args.dry_run:
+            clean_selected_scene_outputs(slides_folder, selected)
         code = run(
             render_command(
                 root=root,
