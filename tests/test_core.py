@@ -44,7 +44,16 @@ class SkillPackageTest(unittest.TestCase):
         self.assertLess(len(text.splitlines()), 500)
         for reference in (REPO_ROOT / "references").glob("*.md"):
             self.assertIn(f"`references/{reference.name}`", text)
-        self.assertFalse((REPO_ROOT / "README.md").exists())
+
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        for path in (
+            "assets/demo/qkv-attention.gif",
+            "assets/demo/attention-deck-overview.png",
+            "SKILL.md",
+            "THIRD_PARTY_NOTICES.md",
+        ):
+            self.assertIn(path, readme)
+            self.assertTrue((REPO_ROOT / path).exists())
 
     def test_openai_interface_matches_skill(self) -> None:
         data = yaml.safe_load((REPO_ROOT / "agents" / "openai.yaml").read_text())
