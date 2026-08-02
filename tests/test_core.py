@@ -54,6 +54,9 @@ class SkillPackageTest(unittest.TestCase):
 
     def test_release_provenance_and_private_source_defaults(self) -> None:
         requirements = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "ci.yml"
+        ).read_text(encoding="utf-8")
         scripts = "\n".join(
             path.read_text(encoding="utf-8")
             for path in (REPO_ROOT / "scripts").glob("*.py")
@@ -64,7 +67,8 @@ class SkillPackageTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
         self.assertIn("pypdf", requirements)
-        self.assertNotIn("PyMuPDF", requirements)
+        self.assertIn("pypdf", workflow)
+        self.assertNotIn("PyMuPDF", requirements + workflow)
         self.assertNotIn("import fitz", scripts)
         for item in ("Manim Community Edition", "pypdf", "Humanizer-zh", "FFmpeg"):
             self.assertIn(item, notices)
