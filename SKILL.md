@@ -35,11 +35,12 @@ Read `references/workflow.md` for the authoritative sequence and approval gates.
 2. Normalize sources and create an evidence map.
 3. Write and, by default, obtain approval for the design brief and outline.
 4. Write and validate `planning/deck.yaml`.
-5. Implement and review a representative sample before full production.
-6. Generate scenes and render a low-quality draft.
-7. Run automated and visual QA; repair only affected slides.
-8. Render final media and export requested outputs.
-9. Verify HTML, PPTX, PDF, speech, sources, and rebuild commands.
+5. Humanize audience-facing copy and approve `qa/text-review.md`.
+6. Implement and review a representative sample before full production.
+7. Generate scenes and render a low-quality draft.
+8. Run automated and visual QA; repair only affected slides.
+9. Render final media and export requested outputs.
+10. Verify HTML, PPTX, PDF, speech, sources, text review, and rebuild commands.
 
 Skip approval gates only when the user explicitly requests autonomous execution. Even then, preserve the brief, outline, deck specification, and QA evidence.
 
@@ -55,14 +56,19 @@ Read `references/troubleshooting.md` when dependency installation, fonts, LaTeX,
 
 ## Ingest evidence
 
-Read `references/source-ingestion.md`. Normalize supported files with:
+Read `references/source-ingestion.md` and `references/licensing-and-publication.md`.
+Keep third-party documents and full-text extraction artifacts private unless their
+license expressly permits redistribution. Normalize supported files with:
 
 ```bash
 python "$SKILL_DIR/scripts/extract_source.py" SOURCE... \
-  --output-dir PROJECT_DIR/planning/extracted --extract-images
+  --output-dir PROJECT_DIR/.private/extracted --extract-images
 ```
 
-Use stable evidence IDs in `planning/evidence-map.md`. Never invent numeric results, citations, figures, equations, or experimental conditions.
+Use stable evidence IDs in `planning/evidence-map.md`. Public projects should retain
+bibliographic references, official links, locators, and original evidence summaries,
+not unlicensed source files or extracted full text. Never invent numeric results,
+citations, figures, equations, or experimental conditions.
 
 ## Design the narrative
 
@@ -75,6 +81,23 @@ python "$SKILL_DIR/scripts/validate_deck.py" PROJECT_DIR/planning/deck.yaml --ch
 ```
 
 Do not generate Manim scenes from an invalid specification.
+
+## Humanize the copy
+
+Read `references/text-humanization.md`. Apply a general humanizer pass, followed
+by a locale-specific pass such as `humanizer-zh` for Chinese decks when available.
+Preserve claims, values, citations, equations, and established technical terms.
+
+Run:
+
+```bash
+python "$SKILL_DIR/scripts/audit_text.py" PROJECT_DIR/planning/deck.yaml
+```
+
+Review the generated `qa/text-review.md`, synchronize revised wording with every
+visible Manim string, regenerate the speech manuscript, and mark the text review
+approved only after checking evidence fidelity and spoken rhythm. Re-render every
+slide whose visible text changed; earlier visual approval no longer applies.
 
 ## Author Manim scenes
 
@@ -126,11 +149,16 @@ Verify outputs:
 python "$SKILL_DIR/scripts/verify_outputs.py" PROJECT_DIR/planning/deck.yaml
 ```
 
-File existence is insufficient. Verify final visual-approval evidence; HTML media and navigation; PPTX archive, slides, media, stable nonblank poster frames, static fallbacks behind videos, automatic playback, and notes; PDF page count, 16:9 dimensions, and previews; speech slide mapping and timing; source paths and evidence IDs; and exact rebuild commands.
+File existence is insufficient. Verify final text-review and visual-approval evidence; HTML media and navigation; PPTX archive, slides, media, stable nonblank poster frames, static fallbacks behind videos, automatic playback, and notes; PDF page count, 16:9 dimensions, and previews; speech slide mapping and timing; source paths and evidence IDs; and exact rebuild commands.
 
 ## Deliver transparently
 
 Hand off the complete project layout defined in `references/output-contract.md`. Report final artifact paths, passed and unresolved QA findings, source limitations, timing variance, the command to revise one slide, and whether each format was opened or structurally verified.
+
+Before publication, apply `references/licensing-and-publication.md`: scan tracked
+files for third-party originals, remove private extraction artifacts, preserve
+required notices, and do not bundle fonts or external executables without a separate
+redistribution review.
 
 Never claim completion when only a dry run, partial scene, placeholder, or unreviewed render exists.
 
@@ -138,8 +166,10 @@ Never claim completion when only a dry run, partial scene, placeholder, or unrev
 
 - `references/workflow.md`: production sequence and approval gates.
 - `references/source-ingestion.md`: supported sources and evidence integrity.
+- `references/licensing-and-publication.md`: source privacy, attribution, and release checks.
 - `references/deck-spec.md`: required `deck.yaml` schema and timing rules.
 - `references/scientific-storytelling.md`: research and teaching narrative design.
+- `references/text-humanization.md`: general and locale-specific spoken-copy review.
 - `references/manim-authoring.md`: scene, layout, animation, and typography rules.
 - `references/visual-qa.md`: automated and visual review gates.
 - `references/output-contract.md`: project layout and deliverable verification.

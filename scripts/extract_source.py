@@ -45,17 +45,23 @@ def extract_pdf_source(
     source: Path, output: Path, *, image_dir: Path | None
 ) -> dict[str, Any]:
     try:
-        import fitz
+        from pypdf import PdfReader
+        from pypdf.errors import PyPdfError
     except ImportError as exc:
-        raise RuntimeError("PyMuPDF is required for PDF extraction") from exc
+        raise RuntimeError("pypdf is required for PDF extraction") from exc
 
-    doc = fitz.open(source)
+    try:
+        document = PdfReader(source)
+    except (OSError, PyPdfError) as exc:
+        raise RuntimeError(f"could not read PDF: {exc}") from exc
+
+    page_count = len(document.pages)
     lines = [
         f"# Extracted source: {source.name}",
         "",
         f"- Original path: `{source}`",
         f"- SHA-256: `{sha256(source)}`",
-        f"- Pages: {doc.page_count}",
+        f"- Pages: {page_count}",
         "",
         "---",
         "",
@@ -66,24 +72,31 @@ def extract_pdf_source(
     if image_dir is not None:
         image_dir.mkdir(parents=True, exist_ok=True)
 
-    for page_number, page in enumerate(doc, start=1):
-        text = page.get_text("text").strip()
+    for page_number, page in enumerate(document.pages, start=1):
+        try:
+            text = (page.extract_text() or "").strip()
+        except (KeyError, PyPdfError, ValueError):
+            text = ""
         character_count += len(text)
         lines.extend([f"## Page {page_number}", "", text or "_[No extractable text]_", ""])
 
         if image_dir is None:
             continue
-        seen_xrefs: set[int] = set()
-        for image_index, image in enumerate(page.get_images(full=True), start=1):
-            xref = int(image[0])
-            if xref in seen_xrefs:
+        seen_images: set[str] = set()
+        try:
+            page_images = page.images
+        except (KeyError, PyPdfError, ValueError):
+            page_images = []
+        for image_index, image in enumerate(page_images, start=1):
+            image_bytes = image.data
+            image_digest = hashlib.sha256(image_bytes).hexdigest()
+            if image_digest in seen_images:
                 continue
-            seen_xrefs.add(xref)
-            image_data = doc.extract_image(xref)
-            extension = image_data.get("ext", "bin")
+            seen_images.add(image_digest)
+            extension = Path(image.name).suffix.lstrip(".") or "bin"
             filename = f"{safe_stem(source)}-p{page_number:03d}-img{image_index:02d}.{extension}"
             destination = image_dir / filename
-            destination.write_bytes(image_data["image"])
+            destination.write_bytes(image_bytes)
             extracted_images.append(str(destination))
             relative_image = destination.relative_to(output.parent)
             lines.extend(
@@ -92,7 +105,7 @@ def extract_pdf_source(
 
     output.write_text("\n".join(lines), encoding="utf-8")
     return {
-        "pages": doc.page_count,
+        "pages": page_count,
         "images": extracted_images,
         "characters": character_count,
     }

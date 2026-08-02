@@ -5,10 +5,14 @@
 Use the bundled extractor for PDF papers and reports, Markdown, LaTeX source, and plain-text outlines:
 
 ```bash
-python scripts/extract_source.py SOURCE... --output-dir PROJECT/planning/extracted
+python scripts/extract_source.py SOURCE... --output-dir PROJECT/.private/extracted
 ```
 
-Add `--extract-images` for PDF figures. The script preserves originals, records SHA-256 hashes, writes page-delimited Markdown, and creates `source-manifest.json`.
+Add `--extract-images` only when figures must be inspected. The script never modifies
+the original, records SHA-256 hashes, writes page-delimited Markdown, and creates
+`source-manifest.json`. Treat that output as private working material unless the
+source license permits republication. Read `licensing-and-publication.md` before
+moving any extracted text or image into a tracked directory.
 
 ## Reading strategy
 
@@ -26,7 +30,10 @@ Create stable IDs before planning slides:
 | `eq-04` | equation or formal definition |
 | `claim-05` | source-backed textual claim |
 
-Record original file, page or section, original caption, and allowed transformation. If a figure is redrawn with Manim, cite the original evidence and mark the new visual as an explanatory reconstruction.
+Record the bibliographic source, page or section locator, a concise paraphrase, and
+the allowed transformation. Do not copy a complete caption unless quotation is
+necessary and permitted. If a figure is redrawn with Manim, cite the original
+evidence and mark the new visual as an explanatory reconstruction.
 Keep each ID in backticks in the first column of the Markdown table. `validate_deck.py` reads this column and rejects duplicate or unregistered slide references.
 
 ## Scientific integrity

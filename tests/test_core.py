@@ -18,6 +18,8 @@ if str(SCRIPTS) not in sys.path:
 
 import render_deck
 import scaffold_project
+import audit_text
+import extract_source
 import validate_deck
 import verify_outputs
 import write_speech
@@ -49,6 +51,25 @@ class SkillPackageTest(unittest.TestCase):
         interface = data["interface"]
         self.assertIn("$build-manim-decks", interface["default_prompt"])
         self.assertLessEqual(len(interface["short_description"]), 64)
+
+    def test_release_provenance_and_private_source_defaults(self) -> None:
+        requirements = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
+        scripts = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in (REPO_ROOT / "scripts").glob("*.py")
+        )
+        notices = (REPO_ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
+        project_ignore = (
+            REPO_ROOT / "assets" / "project-template" / ".gitignore"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("pypdf", requirements)
+        self.assertNotIn("PyMuPDF", requirements)
+        self.assertNotIn("import fitz", scripts)
+        for item in ("Manim Community Edition", "pypdf", "Humanizer-zh", "FFmpeg"):
+            self.assertIn(item, notices)
+        for pattern in (".private/", "planning/extracted/", "source/*.pdf"):
+            self.assertIn(pattern, project_ignore)
 
 
 class HelpersTest(unittest.TestCase):
@@ -109,6 +130,52 @@ class HelpersTest(unittest.TestCase):
         estimate = write_speech.estimate_minutes("算力调度 GPU SLA", "zh-CN")
         self.assertGreater(estimate, 4 / 240)
 
+    def test_text_audit_separates_hard_and_judgment_findings(self) -> None:
+        data = {
+            "project": {"title": "A — B"},
+            "narrative": {
+                "thesis": "真正值得带走的不是口号，而是细节。",
+                "takeaways": [],
+            },
+            "slides": [],
+        }
+        findings = audit_text.audit(data)
+        self.assertTrue(any(item.severity == "error" for item in findings))
+        self.assertTrue(any(item.severity == "review" for item in findings))
+
+    def test_pdf_extraction_and_page_verification_use_pypdf(self) -> None:
+        from PIL import Image
+        from pypdf import PdfWriter
+
+        with tempfile.TemporaryDirectory() as temp_name:
+            root = Path(temp_name)
+            source = root / "source.pdf"
+            extracted = root / "source.extracted.md"
+            writer = PdfWriter()
+            writer.add_blank_page(width=1280, height=720)
+            with source.open("wb") as handle:
+                writer.write(handle)
+
+            details = extract_source.extract_pdf_source(
+                source, extracted, image_dir=None
+            )
+            pages, sizes = verify_outputs.pdf_page_info(source)
+
+            self.assertEqual(details["pages"], 1)
+            self.assertEqual(pages, 1)
+            self.assertEqual(sizes, [(1280.0, 720.0)])
+            self.assertIn("## Page 1", extracted.read_text(encoding="utf-8"))
+
+            image_source = root / "image-source.pdf"
+            image_output = root / "image-source.extracted.md"
+            image_dir = root / "images"
+            Image.new("RGB", (64, 32), "red").save(image_source, "PDF")
+            image_details = extract_source.extract_pdf_source(
+                image_source, image_output, image_dir=image_dir
+            )
+            self.assertEqual(len(image_details["images"]), 1)
+            self.assertTrue(Path(image_details["images"][0]).is_file())
+
 
 class ScaffoldAndValidationTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -127,6 +194,8 @@ class ScaffoldAndValidationTest(unittest.TestCase):
             self.data, deck_path=self.deck_path, check_paths=True
         )
         self.assertFalse([item for item in findings if item.severity == "error"])
+        text_report = self.root / "qa" / "text-review.md"
+        self.assertIn("Text review: pending", text_report.read_text(encoding="utf-8"))
 
     def test_duplicate_slide_and_scene_fail(self) -> None:
         invalid = copy.deepcopy(self.data)
@@ -216,6 +285,8 @@ class ScaffoldAndValidationTest(unittest.TestCase):
     def test_speech_contains_all_slide_sections(self) -> None:
         manuscript, warnings = write_speech.build_speech(self.data)
         self.assertEqual(manuscript.count("\n## s"), len(self.data["slides"]))
+        self.assertIn("## s01 |", manuscript)
+        self.assertNotIn("—", manuscript)
         self.assertIn("## Timing summary", manuscript)
         self.assertFalse(warnings)
 

@@ -7,6 +7,8 @@
 - Install FFmpeg and its `ffprobe` companion through the operating system package manager; a Python package is not a substitute.
 - Install a TeX distribution only when the deck uses `MathTex`, `Tex`, or LaTeX source conversion.
 - Run `scripts/preflight.py` from the same activated environment and `PATH` that will run the renderer.
+- PDF extraction and verification use `pypdf`; do not add PyMuPDF as a fallback because
+  its AGPL/commercial dual license changes the release obligations.
 
 ## Manim and manim-slides
 

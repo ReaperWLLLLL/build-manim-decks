@@ -9,6 +9,9 @@ directory and its Python environment activated.
 python "$SKILL_DIR/scripts/preflight.py" --need-pdf-input --need-latex --need-pptx
 python "$SKILL_DIR/scripts/validate_deck.py" planning/deck.yaml --check-paths
 
+# Keep third-party PDF originals and full-text extraction under ignored .private/.
+# Do not place them in a public release without redistribution permission.
+
 # Representative draft sample; replace s02 when another slide is more demanding.
 python "$SKILL_DIR/scripts/render_deck.py" planning/deck.yaml \
   --profile draft --slides s02 --outputs html,speech

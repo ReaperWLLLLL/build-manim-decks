@@ -270,12 +270,16 @@ def check_pptx(path: Path, expected_slides: list[dict[str, Any]]) -> list[Check]
 
 def pdf_page_info(path: Path) -> tuple[int | None, list[tuple[float, float]]]:
     try:
-        import fitz
+        from pypdf import PdfReader
+        from pypdf.errors import PyPdfError
 
-        with fitz.open(path) as document:
-            sizes = [(float(page.rect.width), float(page.rect.height)) for page in document]
-            return document.page_count, sizes
-    except (ImportError, OSError, RuntimeError):
+        document = PdfReader(path)
+        sizes = [
+            (float(page.mediabox.width), float(page.mediabox.height))
+            for page in document.pages
+        ]
+        return len(document.pages), sizes
+    except (ImportError, OSError, PyPdfError, TypeError, ValueError):
         result = subprocess.run(
             ["pdfinfo", str(path)], capture_output=True, text=True, check=False
         )
@@ -315,7 +319,7 @@ def check_speech(path: Path, data: dict[str, Any]) -> list[Check]:
         return [Check("speech", "blocker", False, f"missing file: {path}")]
     text = path.read_text(encoding="utf-8", errors="replace")
     expected_slides = len(data["slides"])
-    sections = re.findall(r"^##\s+s\d{2,3}\s+—", text, flags=re.MULTILINE)
+    sections = re.findall(r"^##\s+s\d{2,3}\s+\|", text, flags=re.MULTILINE)
     notes_present = sum(
         slide["notes"].strip() in text for slide in data["slides"] if slide["notes"].strip()
     )
@@ -376,6 +380,7 @@ def check_qa(root: Path, expected_slides: int) -> list[Check]:
     contact_sheet = final_dir / "contact-sheet.png"
     frames_dir = final_dir / "frames"
     human_report = root / "qa" / "report.md"
+    text_report = root / "qa" / "text-review.md"
 
     automated_text = (
         automated.read_text(encoding="utf-8", errors="replace")
@@ -387,13 +392,29 @@ def check_qa(root: Path, expected_slides: int) -> list[Check]:
         if human_report.is_file()
         else ""
     )
+    text_review = (
+        text_report.read_text(encoding="utf-8", errors="replace")
+        if text_report.is_file()
+        else ""
+    )
     frames = list(frames_dir.glob("*.png")) if frames_dir.is_dir() else []
     approved = re.search(
         r"^Final visual approval:\s*approved\s*$",
         human_text,
         flags=re.IGNORECASE | re.MULTILINE,
     )
+    text_approved = re.search(
+        r"^Text review:\s*approved\s*$",
+        text_review,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
     return [
+        Check(
+            "qa",
+            "blocker",
+            text_approved is not None,
+            "audience-facing text review approved",
+        ),
         Check(
             "qa",
             "blocker",

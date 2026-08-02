@@ -6,7 +6,8 @@ Create projects with this stable layout:
 
 ```text
 project/
-├── source/                 # user-provided material; never overwrite
+├── .private/               # ignored third-party originals and full-text extraction
+├── source/                 # publishable user material or citation records; never overwrite
 ├── planning/
 │   ├── design-brief.md
 │   ├── evidence-map.md
@@ -21,6 +22,7 @@ project/
 │   ├── draft/             # draft media and manim-slides manifests
 │   └── final/             # final media and manim-slides manifests
 ├── qa/
+│   ├── text-review.md        # language audit and approval
 │   ├── draft/
 │   │   ├── frames/
 │   │   ├── contact-sheet.png
@@ -72,7 +74,7 @@ Playback policy varies between PowerPoint, Keynote, LibreOffice, and browser vie
 Create `speech.md` with one section per slide:
 
 ```markdown
-## s07 — The scheduler shifts flexible jobs toward cleaner intervals
+## s07 | The scheduler shifts flexible jobs toward cleaner intervals
 
 **Target time:** 75 seconds
 
@@ -83,6 +85,14 @@ Spoken manuscript...
 ```
 
 Match the requested language and speaking style. Keep the estimated total duration within 10% of the requested budget.
+
+## Text review
+
+Keep `qa/text-review.md` with the mechanical audit and manual acceptance record.
+Final verification requires `Text review: approved`. Approval confirms that claims,
+values, equations, citations, and terminology still match the evidence; notes sound
+natural when read aloud; visible scene strings are synchronized; and affected
+slides were re-rendered after wording changes.
 
 ## Rebuild instructions
 
@@ -96,3 +106,13 @@ Create `rebuild.md` containing exact commands for:
 - rebuilding each output independently.
 
 Do not include machine-specific absolute paths in the delivered instructions.
+
+## Publication boundary
+
+- Keep unlicensed third-party originals, full-text extraction, and page renders under
+  `.private/`; exclude that directory from version control and release archives.
+- A public example may keep citations, official URLs, content hashes, locators,
+  independently written summaries, and explanatory redraws with attribution.
+- Do not bundle proprietary font files, FFmpeg binaries, or a Python environment as
+  though they were covered by the project's license. Review those components separately.
+- Preserve `LICENSE` and `THIRD_PARTY_NOTICES.md` in every source release.

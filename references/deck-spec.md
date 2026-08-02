@@ -15,7 +15,7 @@ project:
   aspect_ratio: "16:9"
   theme: "scientific-dark"
   source_files:
-    - "source/paper.pdf"
+    - ".private/sources/paper.pdf"
 narrative:
   thesis: "Carbon-aware scheduling makes computing a flexible grid load."
   takeaways:
@@ -40,7 +40,7 @@ outputs:
 | `duration_minutes` | Positive number. |
 | `aspect_ratio` | `16:9` for v0.1. |
 | `theme` | Theme identifier implemented by the project. |
-| `source_files` | Non-empty list of source paths. |
+| `source_files` | Non-empty list of project-relative source paths. Put unlicensed third-party originals under ignored `.private/sources/`; use a tracked citation record for public examples. |
 
 ## Slide fields
 
@@ -90,11 +90,25 @@ Rules:
 - Use 30-90 seconds for most research slides.
 - Split any slide requiring more than three independent claims.
 
+## Audience-facing language rules
+
+- Run the humanization workflow in `text-humanization.md` after the specification
+  validates and before implementing the representative sample.
+- Keep action titles concrete. Avoid promotional claims, slogan-like oppositions,
+  generic signposting, and vague authority.
+- Preserve formulas, values, citations, proper names, and standard technical terms.
+- Read speaker notes aloud in the requested language and keep the estimated total
+  duration within 10% of the requested budget.
+- Synchronize every wording change with visible scene strings, then re-render and
+  repeat visual QA.
+
 ## Evidence rules
 
 - Every quantitative claim must have at least one `source_ref`.
 - Every `source_ref` must match an ID declared in the first column of `planning/evidence-map.md`; the validator rejects unknown or duplicate IDs.
 - Reused paper figures must retain source and page/figure identifiers.
+- Do not publish third-party source documents, extracted full text, or page images
+  unless their license or explicit permission allows redistribution.
 - Distinguish reported evidence from proposed interpretation in the notes.
 - Never create a plausible-looking but unsupported experimental result.
 

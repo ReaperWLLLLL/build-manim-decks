@@ -78,7 +78,7 @@ def collect_checks(args: argparse.Namespace) -> list[Check]:
         command_check("latex", required=args.need_latex),
         module_check("yaml", "PyYAML", required=True),
         module_check("PIL", "Pillow", required=True),
-        module_check("fitz", "PyMuPDF", required=args.need_pdf_input),
+        module_check("pypdf", "pypdf", required=args.need_pdf_input),
     ]
     if args.need_pptx:
         checks.append(module_check("pptx", "python-pptx", required=True))
@@ -89,7 +89,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--need-latex", action="store_true", help="Require a LaTeX executable")
     parser.add_argument(
-        "--need-pdf-input", action="store_true", help="Require PyMuPDF for PDF extraction"
+        "--need-pdf-input", action="store_true", help="Require pypdf for PDF extraction"
     )
     parser.add_argument("--need-pptx", action="store_true", help="Require python-pptx")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")

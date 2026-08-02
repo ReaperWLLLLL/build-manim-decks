@@ -2,6 +2,10 @@
 .venv/
 __pycache__/
 *.py[cod]
+.private/
+planning/extracted/
+source/*.pdf
+tmp/
 media/
 build/draft/
 build/final/

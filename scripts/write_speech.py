@@ -26,7 +26,7 @@ def build_speech(data: dict[str, Any]) -> tuple[str, list[str]]:
     project = data["project"]
     language = project["language"]
     title = project["title"]
-    lines = [f"# Speech manuscript — {title}", ""]
+    lines = [f"# Speech manuscript: {title}", ""]
     warnings: list[str] = []
     target_total = float(project["duration_minutes"])
     estimated_total = 0.0
@@ -47,7 +47,7 @@ def build_speech(data: dict[str, Any]) -> tuple[str, list[str]]:
         cue = slide.get("advance_cue") or "Advance after completing the slide claim."
         lines.extend(
             [
-                f"## {slide['id']} — {slide['title']}",
+                f"## {slide['id']} | {slide['title']}",
                 "",
                 f"**Target time:** {target_seconds:g} seconds  ",
                 f"**Estimated manuscript time:** {actual_seconds:.0f} seconds",
